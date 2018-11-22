@@ -1,3 +1,5 @@
+#--LUCIANO ANDRIAN TP FINAL LABORATORIO PARA EL ....ETC
+####################################################################\m/####################################################################
 rm(list=ls())
 library(maps)
 library(readxl)
@@ -7,6 +9,8 @@ library(ggmap)
 library(mapproj)
 library(grid)
 library(gridExtra)
+library(akima)
+####################################################################\m/####################################################################
 
 estaciones<-as.data.frame(read_excel("datos_estaciones.xls"))
 estaciones2<-data.frame(estaciones[[1]],estaciones[[2]],estaciones[[6]])
@@ -18,9 +22,8 @@ arg<-arg1 + geom_point(data=puntos, col="red",size=1)
 plot(arg)
 
 ggsave("ESTACIONES.jpg",plot = arg ,width = 30,height = 15 ,units = "cm")
-#guardado de mapa
 
-#######################################################
+####################################################################\m/####################################################################
 
 pp_arg<-list()
 for(i in 1:12){
@@ -38,17 +41,19 @@ pp_estacional[,,2:4]<-apply(pp1[2:34,,,2:4],c(1,2,4),sum)
 
 colnames(pp_estacional)<-c(colnames(pp_arg[[12]]))
 
-#############################################
-#------ESTACIONES------
-#cordoba:87344
-#M.caseros:87393
-#junin 87548
-#salta:87047
-#bariloche:87765
-#rio grande:87934
+####################################################################\m/####################################################################
+#ESTACIONES SELECCIONADAS  
+#Cordoba: 87344
+#M.caseros: 87393
+#junin: 87548
+#Salta: 87047
+#Bariloche: 87765
+#Rio Grande: 87934
 
 estaciones_seleccionadas=c("87344","87393","87548","87047","87765","87934")
-series<-list(Cordoba=matrix(0,nrow=33,ncol=4),M.Caseros=matrix(0,nrow=33,ncol=4),Junin=matrix(0,nrow=33,ncol=4),Salta=matrix(0,nrow=33,ncol=4),Bariloche=matrix(0,nrow=33,ncol=4),R.Grande=matrix(0,nrow=33,ncol=4))
+series<-list(Cordoba=matrix(0,nrow=33,ncol=4),M.Caseros=matrix(0,nrow=33,ncol=4),
+             Junin=matrix(0,nrow=33,ncol=4),Salta=matrix(0,nrow=33,ncol=4),Bariloche=matrix(0,nrow=33,ncol=4),
+             R.Grande=matrix(0,nrow=33,ncol=4))
 
 i=1
 for(i in 1:6){
@@ -58,10 +63,6 @@ for(i in 1:6){
   series[[i]]<-as.data.frame(cbind(series[[i]],c(1980:2012)))
   colnames(series[[i]])<-c("DEF","MAM","JJA","SON","ANIOS")
 }
-
-#GRAFICOS, SERIES ESTACIONAES POR SEPARADAS TODAS UN PANEL DE 2X2 PARA CADA ESTACION SELECCIONADA
-#Y LUEGO GUARDADAS EN UN PANEL DE 1X2, 3 GRAFICOS Y EN CADA UNO 2 ESTACIONES CON SUS SERIES DE PP ESTACIONALES
-
 
 Q <- list()
 colores=c("cyan3","coral3","darkolivegreen2","orange2","tomato2","yellow2")
@@ -83,24 +84,19 @@ ggsave("serie_1.png",plot = grid.arrange(Q[[1]],Q[[2]],ncol=2),width = 30,height
 ggsave("serie_2.png",plot = grid.arrange(Q[[3]],Q[[4]],ncol=2),width = 30,height = 15 ,units = "cm")
 ggsave("serie_3.png",plot = grid.arrange(Q[[5]],Q[[6]],ncol=2),width = 30,height = 15 ,units = "cm")
 
-
-###################################################################
+####################################################################\m/####################################################################
 
 #LOS DATOS ESTAN COMPLETADOS GENERANDO TENDENCIAS NEGATIVAS EN MUCHOS LUGARES
 
-#SIGUE DANDO VALORES NEGATIVOS LAS TENDENCIA!!!! LO MISMO ME USANDO EXCEL
-
-#acumulado anual para cada estacion
-
 pp_acum_anual<-apply(pp[,2:69,1:12],c(1,2),sum)
-
 
 fit<-(lm(pp_acum_anual ~ c(1979:2012))) 
 cf<-round(fit[[1]],2)
 pp_tendencia<-cbind(puntos,cf[2,1:68])
 
 v<-data.frame(X = pp_tendencia[,1],Y = pp_tendencia[,2],Tendencias = pp_tendencia[,3])
-#discretizo para tener mas escala de colores dentro de grafico
+
+#PARA TENER UNA ESCALA DE COLORES DISCRETAS CON MAS NIVELES
 v$Tendencias[which(v[3]<0-10)]<--10
 v$Tendencias[which(-10<v[3]&v[3]<0-7)]<--8
 v$Tendencias[which(-7<v[3]&v[3]<0-3)]<--5
@@ -118,41 +114,23 @@ pp_tend<-ggmap(mapa, extent = 'normal') +
 
 ggsave("Tendencia_PP.jpg",plot = pp_tend ,width = 30,height = 15 ,units = "cm")
 
-jpeg("Tendencia_PP.jpg",width=1200,height=2000,units="px",quality=100)
-plot(pp_tend)
-dev.off()
+####################################################################\m/####################################################################
 
-######################################
-#--------------indices---------------#
-######################################
-library("readxl")
 indices<-list()
 for(i in 1:6){
   indices[[i]]<-as.data.frame(read_excel("tp_indices_mensuales.xls",sheet=i))
 }
 
-#"series estacionales". promedios estacionales??
 aux2<-as.array(unlist(indices))
 indices2<-array(aux2,dim = c(34,13,6))
-
 indices_promedio<-array(NA,dim=c(34,4,6)) #2DA DIMENCION CADA ESTACION DEL ANIO,3ERA ESTACIONES CADA INDICE
-
 indices_promedio[2:34,1,1:6]<-(indices2[1:33,13,1:6]+indices2[2:34,2,1:6]+indices2[2:34,3,1:6])/3
 indices_promedio[2:34,2,1:6]<-apply(indices2[2:34,4:6,1:6],c(1,3),mean)
 indices_promedio[2:34,3,1:6]<-apply(indices2[2:34,7:9,1:6],c(1,3),mean)
 indices_promedio[2:34,4,1:6]<-apply(indices2[2:34,10:12,1:6],c(1,3),mean)
-
 colnames(indices_promedio)<-c("DEF","MAM","JJA","SON")
 
-
-
-##RISE OF THE "FORS"##
-
-#ES EL TEST DE CADA ESTACION DEL ANIO(DIMENCION 2), 
-#IDENTIFICANDO DONDE ES SIGNIFICATIVA PARA LOS 3 NIVELES DE CONFIANZA,
-#LA 4TA DIMECION 4 ES EL VALOR DE R PARA TODAS LAS ESTACIONES
-#PARA TODOS LOS INDICES (DIMENCION 3)
-
+#TEST DE CORRELACION
 
 corr<-array(NA,dim = c(68,4,6,2))
 confianza=c(0.90,0.95,0.99)
@@ -173,11 +151,8 @@ for(i in 1:6){
   }
 }
 
-
-
-######INTERPOLACION####
-library(akima)
-
+#INTERPOLACION
+#REORDENO LOS DATOS PARA USAR UN SOLO FOR
 aux3<-as.array(unlist(corr[,,,2]))
 corr2<-array(aux3,dim = c(68,24))
 
@@ -188,6 +163,7 @@ data(wrld_simpl)
 mymap <- fortify(wrld_simpl) #PARA QUE FUNCIONE EN GGPLOT
 DMJS<-rep(c("DEF","MAM","JJA","SON"),6)
 V<-list()
+#GRAFICADO DE TODOS LOS MAPAS
 for(i in 1:24)
   local({
   d<-data.frame(corr2[,i],puntos[,1],puntos[,2])
@@ -202,7 +178,7 @@ for(i in 1:24)
   dInterp$z[which(abs(dInterp$z)>1)]<-1
   gg<-data.frame(x=puntos[,1],y=puntos[,2],Confianzax100=corr3[,i])
   gg2<-gg[which(!is.na(gg[,3])),]
-  #if(length(puntos[which(!is.na(corr3[,i,1])),][,1])!=0 & length(puntos[which(!is.na(corr3[,i,2])),][,1])!=0 & length(puntos[which(!is.na(corr3[,i,3])),][,1])!=0){
+
   V[[i]]<<-ggplot() +
     geom_map(data = mymap, map = mymap, aes(x = long, y = lat, map_id = id), fill = "white", color = "black") +
     geom_tile(data = dInterp, aes(x = x, y = y, fill = z), alpha = 0.7) + 
@@ -219,19 +195,18 @@ for(i in 1:24)
 }) 
 
 source("funciones_tp_final.R")
-#PONER ESCALA DE CONFIANZA DISCRETA EN LOS MAPAS V[[]]
-#correlacion lagueada y scatter plot, usar funcion creada antes.
+
 indices_nombres<-c("AAO","DOI","NINO3.4","SOI","SAODI","OLR")
-AAO<-grid.arrange_tp.final(V[[1]],V[[2]],V[[3]],V[[4]],ncol=2,nrow = 2,position = "right",titulo = "CORRELACION AAO VS PP ACUMULADA")
-DOI<-grid.arrange_tp.final(V[[5]],V[[6]],V[[7]],V[[8]],ncol=2,nrow = 2,position = "right",titulo = "CORRELACION DOI VS PP ACUMULADA")
-NINO3.4<-grid.arrange_tp.final(V[[9]],V[[10]],V[[11]],V[[12]],ncol=2,nrow = 2,position = "right",titulo = "CORRELACION NINO3.4 VS PP ACUMULADA")
-SOI<-grid.arrange_tp.final(V[[13]],V[[14]],V[[15]],V[[16]],ncol=2,nrow = 2,position = "right",titulo = "CORRELACION SOI VS PP ACUMULADA ")
-SAODI<-grid.arrange_tp.final(V[[17]],V[[18]],V[[19]],V[[20]],ncol=2,nrow = 2,position = "right",titulo = "CORRELACION SAODI VS PP ACUMULADA")
-OLR<-grid.arrange_tp.final(V[[21]],V[[22]],V[[23]],V[[24]],ncol=2,nrow = 2,position = "right",titulo = "CORRELACION OLR VS PP ACUMULADA")
-#correlacion lagueada, indicies en agosto y pp en son
+ggsave("Corr_AAO_PP.JPG",plot=grid.arrange_tp.final(V[[1]],V[[2]],V[[3]],V[[4]],ncol=2,nrow = 2,position = "right",titulo = "CORRELACION AAO VS PP ACUMULADA"),width = 20,height = 15 ,units = "cm")
+ggsave("Corr_DOI_pp.JPG",plot=grid.arrange_tp.final(V[[5]],V[[6]],V[[7]],V[[8]],ncol=2,nrow = 2,position = "right",titulo = "CORRELACION DOI VS PP ACUMULADA"),width = 20,height = 15 ,units = "cm")
+ggsave("Corr_NINO3.4_PP.JPG",plot=grid.arrange_tp.final(V[[9]],V[[10]],V[[11]],V[[12]],ncol=2,nrow = 2,position = "right",titulo = "CORRELACION NINO3.4 VS PP ACUMULADA"),width = 20,height = 15 ,units = "cm")
+ggsave("Corr_SOI_PP.JPG",plot=grid.arrange_tp.final(V[[13]],V[[14]],V[[15]],V[[16]],ncol=2,nrow = 2,position = "right",titulo = "CORRELACION SOI VS PP ACUMULADA "),width = 20,height = 15 ,units = "cm")
+ggsave("Corr_SAODI_pp.JPG",plot=grid.arrange_tp.final(V[[17]],V[[18]],V[[19]],V[[20]],ncol=2,nrow = 2,position = "right",titulo = "CORRELACION SAODI VS PP ACUMULADA"),width = 20,height = 15 ,units = "cm")
+ggsave("Corr_OLR_PP.JPG",plot=grid.arrange_tp.final(V[[21]],V[[22]],V[[23]],V[[24]],ncol=2,nrow = 2,position = "right",titulo = "CORRELACION OLR VS PP ACUMULADA"),width = 20,height = 15 ,units = "cm")
 
 
-VSON<-list()
+#CORRELACION INDICES-AGOSTO VS PP-SON
+
 corr_son<-array(NA,c(68,6,2))
 for(i in 1:6){
   for(p in 2:69){
@@ -245,13 +220,9 @@ for(i in 1:6){
   }
 }
 
-#aux5<-as.array(unlist(corr_son[,,2]))
-#corr4<-array(aux5,dim = c(68,6))
 
-#aux6<-as.array(unlist(corr_son[,,1]))
-#corr5<-array(aux6,dim = c(68,6))
- 
 title<-c("AAO vs PP","DOI vs PP","NINO3.4 vs PP","SOI vs PP","SAODI vs PP","OLR vs PP")
+VSON<-list()
 
 for(i in 1:6)
   local({
@@ -285,31 +256,22 @@ for(i in 1:6)
     
   })
 
-grid.arrange_tp.final(VSON[[1]],VSON[[2]],VSON[[3]],VSON[[4]],VSON[[5]],VSON[[6]],ncol=3,nrow=2,position = "right",titulo = "Correlacion Indices en Agosto vs PP en SON")
+ggsave("Corr_SON.JPG",plot=grid.arrange_tp.final(VSON[[1]],VSON[[2]],VSON[[3]],VSON[[4]],VSON[[5]],VSON[[6]],ncol=3,nrow=2,position = "right",titulo = "Correlacion Indices en Agosto vs PP en SON"),width = 30,height = 15 ,units = "cm")
 
-#DOI posadas estaciones[11,]
-#ninio34 monte caseros estaciones[25,]
-#saodi rosario estaciones[32,]
+####################################################################\m/####################################################################
+
 estaciones_reg<-array(NA,c(33,2,3))
-
 estaciones_reg[,,1]<-cbind(pp_estacional[,12,4],indices_promedio[2:34,4,2])  #posadas vs doi
 estaciones_reg[,,2]<-cbind(pp_estacional[,26,4],indices_promedio[2:34,4,3])  #mcaseros vs nino34
-estaciones_reg[,,3]<-cbind(pp_estacional[,33,4],indices_promedio[2:34,4,5])
+estaciones_reg[,,3]<-cbind(pp_estacional[,33,4],indices_promedio[2:34,4,5])  #Rosario vs SAODI
 colnames(estaciones_reg)<-c("x","y")
 
-#defino una funcion
-regre <- function(df){
-  m <- lm(y ~ x, df);
-  eq <- substitute(y == b %.% italic(x) + a *","~~r^2~"="~r2, 
-                   list(a = round(coef(m)[[1]],digits=2), 
-                        b = round(coef(m)[[2]], digits = 4), 
-                        r2 = format(summary(m)$r.squared, digits = 3)))
-  as.character(as.expression(eq));                 
-}
-titulo<-c("Regresion PP-SON Posadas vs DOI-Agosto","Regresion PP-SON M.Caseros vs Ni?o3.4-Agosto","Regresion PP-SON Rosario vs SAODI-Agosto")
+titulo<-c("Regresion PP-SON Posadas vs DOI-Agosto","Regresion PP-SON M.Caseros vs Nino3.4-Agosto","Regresion PP-SON Rosario vs SAODI-Agosto")
+
 posy<-c(1,2,-2)
 posx<-c(500,500,300)
 Vlag<-list()
+
 for(i in 1:3){
 Vlag[[i]] <- ggplot(as.data.frame(estaciones_reg[,,i]), aes(x=x, y=y)) + geom_point(color = "black", size = 2) +
   ylab("indice")+ xlab("PP Acumulada ")+ theme_bw() + ggtitle(titulo[i]) + 
@@ -318,4 +280,6 @@ Vlag[[i]] <- ggplot(as.data.frame(estaciones_reg[,,i]), aes(x=x, y=y)) + geom_po
   geom_text(x = posx[i], y = posy[i], label = regre(as.data.frame(estaciones_reg[,,i])), parse = TRUE,size=5)  
 }
   
-grid.arrange(Vlag[[1]],Vlag[[2]],Vlag[[3]],ncol=3)  
+ggsave("linear_reg.JPG",plot=grid.arrange(Vlag[[1]],Vlag[[2]],Vlag[[3]],ncol=2),width = 30,height = 15 ,units = "cm")
+
+####################################################################\m/####################################################################
